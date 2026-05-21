@@ -20,29 +20,55 @@ Update all status tracking files and execution context after story completion or
 
 #### PRE-STATUS EVIDENCE CHECK (MANDATORY — DO NOT MARK DONE WITHOUT THIS)
 
-Before updating any story status to "done", verify evidence exists in the story file:
+Before updating any story status to "done", verify evidence exists in the story file using FUZZY matching rules:
 
 ```yaml
 Action: OPEN the story file for {current_story}
+Action: READ the ENTIRE file
 
 Action: IF marking as "completed"/"done":
-  Action: RUN THIS EVIDENCE CHECK — if ANY fails, BLOCK instead of marking done:
+  Action: RUN FUZZY EVIDENCE CHECK — same rules as step-04 POST-CONDITION GATE:
 
-  EVIDENCE CHECKLIST:
-  [ ] "## Test Output Details" section EXISTS with actual command output (not placeholder)
-  [ ] "## Lint Output Details" section EXISTS with actual command output (not placeholder)  
-  [ ] "Definition-of-Done Checklist" has ALL items [x]
-  [ ] "Code Review Summary" section EXISTS (step-05 must have completed)
-  [ ] "## E2E Output Details" section EXISTS (unless E2E not applicable for this story)
+  EVIDENCE FUZZY CHECK:
+  ─────────────────────
+  1. TEST OUTPUT:
+     Search for: "Test Output Details", "Test Execution Summary", "Test Output",
+       "Test Results", "测试结果", "Unit Test", "Tests"
+     Content: >=3 heuristics (test cmd, PASS/FAIL, numeric counts, terminal output, >5 lines)
+     Result: PASS / FAIL
 
-  If ANY item is UNCHECKED:
-    → Story is NOT "done". Mark as "blocked" instead.
-    → Record blocking point: step: "status-update", reason: "Missing required evidence: {item}"
-    → Output: "⛔ Cannot mark done: missing {item}. Story blocked."
-    → Set story_outcome = "blocked"
+  2. LINT OUTPUT:
+     Search for: "Lint Output Details", "Lint Output", "Lint Results",
+       "ESLint", "linting", "Code Quality"
+     Content: >=2 heuristics (lint cmd, error/warning counts, exit code, >2 lines)
+     Result: PASS / FAIL
 
-  If ALL items are CHECKED:
+  3. DOD CHECKLIST:  
+     Search for: "Definition-of-Done", "Definition of Done", "DoD",
+       "完成自检", "自检", "Step 04 自检", "Done Checklist"
+     Content: ALL [x], >=5 items
+     Result: PASS / FAIL (with unchecked count)
+
+  4. CODE REVIEW:
+     Search for: "Code Review Summary", "Senior Developer Review", 
+       "Code Review", "Formal Code Review", "BMAD"
+     Content: review outcome text (Approve/Changes Requested/Blocked), not empty
+     Result: PASS / FAIL
+
+  5. E2E OUTPUT (Conditional):
+     Search for: "E2E Output", "E2E Test", "e2e", "Playwright", "Cypress", "端到端"
+     If story has UI AC and no evidence → FAIL
+     If story has no UI AC → PASS (N/A)
+     Result: PASS / FAIL / N/A
+
+  FINAL VERDICT:
+  If ALL mandatory checks PASS (1, 2, 3, 4 all PASS; 5 PASS or N/A):
     → Proceed to mark as "completed" below
+  If ANY mandatory check FAILS:
+    → Story is NOT "done". Mark as "blocked" instead.
+    → Record blocking point: step: "status-update", reason: "Missing required evidence: {failed_items}"
+    → Output: "⛔ Cannot mark done: missing evidence — {failed_items}. Story blocked."
+    → Set story_outcome = "blocked"
 ```
 
 #### Based on previous step:

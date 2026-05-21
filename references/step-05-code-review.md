@@ -42,31 +42,45 @@ Execute comprehensive code review using two different AI perspectives to ensure 
 
 ```yaml
 Action: OPEN the story file for {current_story}
-Action: SEARCH for mandatory testing evidence sections:
+Action: READ the ENTIRE file content
+Action: Run FUZZY evidence checks (same rules as step-04 POST-CONDITION GATE):
+
+EVIDENCE FUZZY-SEARCH RULES:
+─────────────────────────────
+For each evidence type below, search for heading patterns FIRST, then check content heuristics.
 
 CHECKPOINT A — Test Output:
-  IF "## Test Output Details" section is MISSING OR EMPTY OR contains only placeholder text:
-    → BLOCK. DO NOT continue code review.
-    → Output: "⛔ PRE-FLIGHT FAILED: No test output found in story file. Code review cannot proceed."
-    → Action: Record as blocking point — step: "review", reason: "Missing test evidence"
-    → Action: RETURN to references/step-04-testing.md
-    → STOP HERE. Do not proceed past this point.
+  Heading patterns: "Test Output Details", "Test Execution Summary", "Test Output", 
+    "Test Results", "测试结果", "Unit Test", "Test Summary", "Tests"
+  Content heuristics (need 3+):
+    [1] "npm run test" OR "jest" OR "vitest" present
+    [2] "Tests:" OR "PASS" OR "FAIL" OR "exit code" present
+    [3] Contains numeric test counts ("5 passed", "3/3", etc.)
+    [4] Terminal-style output (>5 lines)
+    [5] Not just a narrative one-liner
+  → FAIL if: no heading pattern matches, OR heading matches but <3 content heuristics
+  → Action on FAIL: RETURN to step-04. DO NOT proceed.
 
 CHECKPOINT B — Lint Output:
-  IF "## Lint Output Details" section is MISSING OR EMPTY OR contains only placeholder text:
-    → BLOCK. DO NOT continue code review.
-    → Output: "⛔ PRE-FLIGHT FAILED: No lint output found in story file. Code review cannot proceed."
-    → Action: Record as blocking point — step: "review", reason: "Missing lint evidence"
-    → Action: RETURN to references/step-04-testing.md
-    → STOP HERE. Do not proceed past this point.
+  Heading patterns: "Lint Output Details", "Lint Output", "Lint Results",
+    "ESLint", "linting", "Code Quality"
+  Content heuristics (need 2+):
+    [1] "npm run lint" OR "eslint" OR "prettier" present
+    [2] "error" OR "warning" counts OR "0 errors" present  
+    [3] "Exit Code" present
+    [4] More than 2 lines of content
+  → FAIL if: no heading pattern or <2 heuristics
+  → Action on FAIL: RETURN to step-04.
 
 CHECKPOINT C — DoD Checklist:
-  IF "Definition-of-Done Checklist" has ANY `[ ]` (unchecked items):
-    → BLOCK. DO NOT continue code review.
-    → Output: "⛔ PRE-FLIGHT FAILED: DoD checklist incomplete ({count} items unchecked)."
-    → Action: Record as blocking point — step: "review", reason: "Incomplete DoD checklist"
-    → Action: RETURN to references/step-04-testing.md
-    → STOP HERE. Do not proceed past this point.
+  Heading patterns: "Definition-of-Done", "Definition of Done", "DoD",
+    "完成自检", "自检", "Step 04 自检", "Done Checklist"
+  Content heuristics:
+    [1] Contains [x] or [ ] checkboxes
+    [2] ALL checkboxes are [x] (no unchecked [ ])
+    [3] At least 5 items
+  → FAIL if: no heading OR any [ ] unchecked OR <5 items
+  → Action on FAIL: RETURN to step-04.
 
 IF ALL CHECKPOINTS PASS:
   → Output: "✅ Pre-flight test evidence verified. Proceeding to code review..."

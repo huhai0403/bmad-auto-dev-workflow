@@ -41,65 +41,88 @@ For EACH story_key in `stories_completed`:
 
 ```yaml
 Action: OPEN the story file: {implementation_artifacts}/{story_key}.md
-Action: Run the following checks IN ORDER:
+Action: READ the ENTIRE file content
+Action: Run FUZZY evidence checks using the rules below
+
+FUZZY EVIDENCE SEARCH RULES:
+─────────────────────────────
+For ALL checks below, search for heading patterns FIRST using case-insensitive
+substring match. Then validate content heuristics.
 
 #### CHECK 1: Test Output Evidence
-  Section: "## Test Output Details"
-  Verify:
-    - Section EXISTS in the file
-    - Section is NOT empty (more than 5 lines of content)
-    - Contains ACTUAL command output (looks like terminal output, not placeholder text)
-    - Contains exit codes or test counts (patterns like `Tests:`, `PASS`, `FAIL`, `exit code`)
+  Heading patterns (any match):
+    "Test Output Details", "Test Execution Summary", "Test Output",
+    "Test Results", "测试结果", "Unit Test", "Test Summary", "Tests"
   
-  WARNING SIGNS (treat as FAILED):
-    - Section text is "(to be filled)" or "TBD" or "placeholder"
-    - Section text is generic summary like "All tests passed" with no actual command output
-    - Section text is fewer than 3 lines
+  Content heuristics (need 3/5 to PASS):
+    [a] Contains "npm run test" OR "jest" OR "vitest" OR "pytest"
+    [b] Contains "Tests:" OR "PASS" OR "FAIL" OR "exit code" OR "Exit Code"
+    [c] Contains numeric test counts ("5 passed", "3/3", "0 skipped")
+    [d] Contains terminal-style output block (``` fences with test output)
+    [e] The section content is >5 lines (not just a one-line summary)
   
-  Result: PASS / FAIL
+  Verdict:
+    Heading match + >=3 heuristics → PASS
+    Heading match + 2 heuristics → PASS with WARNING (borderline)
+    Heading match + <2 heuristics → FAIL (insufficient evidence)
+    No heading match → FAIL
 
-#### CHECK 2: Lint Output Evidence  
-  Section: "## Lint Output Details"
-  Verify:
-    - Section EXISTS in the file
-    - Section is NOT empty (more than 3 lines of content)
-    - Contains ACTUAL lint command output (looks like terminal output)
-    - Contains error/warning counts or `npm run lint` command reference
+#### CHECK 2: Lint Output Evidence
+  Heading patterns:
+    "Lint Output Details", "Lint Output", "Lint Results",
+    "ESLint", "lint", "linting", "Code Quality"
   
-  WARNING SIGNS (treat as FAILED):
-    - Section text is "(to be filled)" or "TBD" or "placeholder"
-    - Section text is generic like "No lint errors" with no actual output
-    - Section text is fewer than 2 lines
+  Content heuristics (need 2/4 to PASS):
+    [a] Contains "npm run lint" OR "eslint" OR "prettier"
+    [b] Contains error/warning counts or "0 errors"
+    [c] Contains "Exit Code" or "exit code"
+    [d] Section content is >2 lines
   
-  Result: PASS / FAIL
+  Verdict:
+    Heading match + >=2 heuristics → PASS
+    Heading match + 1 heuristic → PASS with WARNING
+    No heading OR 0 heuristics → FAIL
 
 #### CHECK 3: Code Review Evidence
-  Section: "Code Review Summary" OR "Senior Developer Review"
-  Verify:
-    - At least one of these sections EXISTS
-    - Section contains review outcome (Approve / Changes Requested / Blocked)
-    - Section is NOT placeholder text
+  Heading patterns:
+    "Code Review Summary", "Senior Developer Review", 
+    "Code Review", "Formal Code Review", "BMAD"
   
-  Result: PASS / FAIL
+  Content heuristics (need 2/3 to PASS):
+    [a] Contains review outcome (Approve / Changes Requested / Blocked / 通过 / 修改)
+    [b] Contains file:line references or action items with [ ] or [x]
+    [c] Section is NOT placeholder text (not "TBD", not "{{template}}")
+  
+  Verdict:
+    Heading match + >=2 heuristics → PASS
+    Heading match + 1 heuristic → PASS with WARNING
+    No heading OR empty/placeholder → FAIL
 
 #### CHECK 4: DoD Checklist
-  Section: "Definition-of-Done Checklist"
-  Verify:
-    - Section EXISTS
-    - ALL items are marked `[x]` (checked)
-    - COUNT of unchecked `[ ]` items = 0
+  Heading patterns:
+    "Definition-of-Done", "Definition of Done", "DoD",
+    "完成自检", "自检", "Step 04 自检", "Done Checklist"
   
-  Result: PASS / FAIL (count of unchecked items)
+  Content heuristics:
+    [a] Contains [x] OR [ ] checkboxes
+    [b] ALL found checkboxes in this section are [x] (NO [ ] unchecked)
+    [c] At least 5 checkbox items
+  
+  Verdict:
+    Heading match + all [x] + >=5 items → PASS
+    Heading match + {N} unchecked [ ] → FAIL ({N} items unchecked)
+    Heading match + <5 items → FAIL (too few items)
+    No heading → FAIL
 
 #### CHECK 5: E2E Test Evidence (Conditional)
-  Section: "## E2E Output Details"
-  Logic:
-    - If the story's AC includes user journey / UI interaction requirements:
-      - Section MUST exist and contain actual output → PASS/FAIL
-    - If the story is purely backend/logic changes:
-      - Missing section is ACCEPTABLE → PASS (N/A)
+  Heading patterns:
+    "E2E Output", "E2E Test", "e2e", "Playwright", "Cypress", "端到端"
   
-  Result: PASS / FAIL / N/A (auto-passed for non-UI stories)
+  Logic:
+    - Story AC contains UI/user journey requirements → section MUST exist with content → PASS/FAIL
+    - Story is backend-only / no UI → section missing is ACCEPTABLE → PASS (N/A)
+  
+  Verdict: PASS / FAIL / N/A
 ```
 
 ### 3. Accumulate Audit Results

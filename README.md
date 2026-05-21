@@ -1,6 +1,6 @@
 # bmad-auto-dev-workflow
 
-A fully automated, end-to-end development pipeline skill for [BMad](https://github.com/anomalyco/opencode) — the AI-powered software development framework. This skill orchestrates the complete software development lifecycle from story creation through implementation, testing, multi-model code review, and completion auditing.
+A fully automated, end-to-end development pipeline skill for [BMad](https://github.com/bmad-code-org/BMAD-METHOD) — the AI-powered software development framework. This skill orchestrates the complete software development lifecycle from story creation through implementation, testing, multi-model code review, and completion auditing.
 
 ## Overview
 

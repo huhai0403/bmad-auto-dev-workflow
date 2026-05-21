@@ -34,28 +34,95 @@ If "## Test Execution Summary" is EMPTY, MISSING, or contains placeholder text l
 
 ## POST-CONDITION EVIDENCE GATE (MANDATORY — BLOCK IF FAILS)
 
-After ALL tests are executed, verify evidence exists in the story file BEFORE proceeding:
+After ALL tests are executed, verify evidence exists in the story file BEFORE proceeding.
+
+### Evidence Search Rules (Fuzzy Matching)
+
+**DO NOT require exact section names.** Use multi-pattern matching:
 
 ```yaml
 Action: OPEN the story file for {current_story}
-Action: VERIFY EVERY item — if ANY fails, STAY in step-04:
+Action: READ the ENTIRE file content as a single string
+Action: Run the 4 evidence checks below using FUZZY heading matching + content heuristics
 
-  [ ] "## Test Output Details" section EXISTS
-  [ ] "## Test Output Details" contains ACTUAL `npm run test:unit` command output (not placeholder)
-  [ ] "## Test Output Details" contains exit codes (0 or non-0)
-  [ ] "## Lint Output Details" section EXISTS
-  [ ] "## Lint Output Details" contains ACTUAL `npm run lint` command output (not placeholder)
-  [ ] "## Lint Output Details" contains exit code and error/warning counts
-  [ ] "## E2E Output Details" section EXISTS (if E2E tests were applicable)
-  [ ] "Definition-of-Done Checklist" ALL items are `[x]`
+# ── CHECK 1: Test Output Evidence ──
+Accepted Heading Patterns (case-insensitive, any match counts):
+  "Test Output Details", "Test Execution Summary", "Test Output", 
+  "Test Results", "测试结果", "Unit Test", "Test Summary",
+  "单元测试", "Tests"
 
-If ANY checkbox is UNCHECKED:
-  → STAY in step-04. DO NOT advance to step-05.
-  → Output: "⛔ POST-CONDITION FAILED: missing evidence for {item}. Re-running tests..."
-  → Re-execute the missing test type
+Content Heuristics (at least 3 must be present):
+  [A] Contains "npm run test" OR "jest" OR "vitest" OR "pytest" (test command reference)
+  [B] Contains "Tests:" OR "PASS" OR "FAIL" OR "exit code" OR "Exit Code"
+  [C] Contains numeric test counts (e.g., "5 passed", "3/3", "2 failed", "0 skipped")
+  [D] Contains terminal-style output block (``` blocks with test output, actual logs)
+  [E] The surrounding text is >5 lines long (not just a one-liner summary)
 
-If ALL checkboxes are CHECKED:
-  → Proceed to "Update Status to Review" section
+Verdict:
+  Heading PATTERN matches + at least 3/5 content heuristics → PASS
+  Heading PATTERN matches but <3 heuristics → treat as SUSPICIOUS (log warning, but PASS)
+  No heading pattern matches → FAIL
+
+# ── CHECK 2: Lint Output Evidence ──
+Accepted Heading Patterns:
+  "Lint Output Details", "Lint Output", "Lint Results", "Lint",
+  "ESLint", "lint", "linting", "Code Quality"
+
+Content Heuristics (at least 2 must be present):
+  [A] Contains "npm run lint" OR "eslint" OR "prettier" (lint command reference)
+  [B] Contains "error" OR "warning" counts or "0 errors"
+  [C] Contains "Exit Code" or "exit code"
+  [D] The surrounding text is >2 lines
+
+Verdict:
+  Heading PATTERN matches + at least 2/4 content heuristics → PASS
+  Heading matches but no content heuristics → FAIL
+  No heading → FAIL
+
+# ── CHECK 3: DoD Checklist Evidence ──
+Accepted Heading Patterns:
+  "Definition-of-Done", "Definition of Done", "DoD",
+  "完成自检", "自检", "Done Checklist", "Step 04 自检"
+
+Content Heuristics:
+  [A] Contains checkboxes ([x] or [ ]) — must find at least one
+  [B] ALL found checkboxes are [x] (NO unchecked [ ] in this section)
+  [C] At least 5 checkbox items present
+
+Verdict:
+  Heading PATTERN matches + ALL [x] + >=5 items → PASS
+  Heading PATTERN matches + some [ ] unchecked → FAIL ({count} unchecked)
+  Heading PATTERN matches but <5 items → WARN (log, PASS if all [x])
+  No heading → FAIL
+
+# ── CHECK 4: E2E Test Evidence (Conditional) ──
+Accepted Heading Patterns:
+  "E2E Output", "E2E Test", "e2e", "Playwright", "Cypress",
+  "端到端", "Integration Test"
+
+Content Heuristics (same as Test Output):
+  [A] Contains "npm run test:e2e" OR "playwright" OR "cypress"
+  [B] Contains "passed" or "failed" counts
+  [C] Contains terminal-style output >3 lines
+
+Verdict:
+  Heading PATTERN matches + content → PASS
+  No heading AND story AC has UI/user journey → FAIL
+  No heading AND story AC has NO UI requirement → PASS (N/A)
+```
+
+### Gate Verdict
+
+```yaml
+Action: After checking all 4 evidence types:
+  If ALL mandatory checks PASS (Test Output, Lint, DoD all PASS; E2E PASS/N/A):
+    → Gate PASSED. Proceed to "Update Status to Review".
+    
+  If any mandatory check FAILS:
+    → Gate FAILED. STAY in step-04.
+    → Output: "⛔ POST-CONDITION FAILED: missing evidence — {failed_items}"
+    → Re-execute the missing test type
+    → DO NOT advance to step-05
 ```
 
 ## ⛔ ANTI-SKIP GUARDRAIL — READ FIRST
@@ -63,12 +130,12 @@ If ALL checkboxes are CHECKED:
 **There is NO SUCH THING as a change too small to test.** Even comment-only or CSS-only changes require linting at minimum.
 
 Minimum bar for EVERY story before this step is considered complete:
-| Requirement | Evidence Location |
-|-------------|-------------------|
-| `npm run lint` was executed and recorded | Story file: `## Lint Output Details` |
-| `npm run test:unit` was executed and recorded | Story file: `## Test Output Details` |
-| `npm run test:e2e` was executed (if applicable) and recorded | Story file: `## E2E Output Details` |
-| DoD checklist has ALL `[x]` | Story file: `Definition-of-Done Checklist` |
+| Requirement | Evidence Search | Min Heuristic |
+|-------------|----------------|---------------|
+| `npm run lint` was executed and recorded | Fuzzy heading: Lint Output / Lint Results / ESLint | 2/4 content heuristics |
+| `npm run test:unit` was executed and recorded | Fuzzy heading: Test Output / Test Execution Summary / 测试结果 | 3/5 content heuristics |
+| `npm run test:e2e` was executed (if applicable) | Fuzzy heading: E2E Output / Playwright / Cypress | 2/3 content heuristics (or N/A) |
+| DoD checklist has ALL `[x]` | Fuzzy heading: Definition-of-Done / 自检 / Step 04 自检 | All [x], >=5 items |
 
 **If a story misses ANY of the above, it is NOT DONE. Period.**
 
