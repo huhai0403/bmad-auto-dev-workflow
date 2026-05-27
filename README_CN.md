@@ -19,6 +19,10 @@
 - **演练模式**：验证路由逻辑而不真正执行开发/测试/审查
 - **断点续传**：支持从上次中断处继续执行
 - **多批次支持**：支持处理多个需求批次，并对命名差异进行模糊匹配
+- **过程记录文档**：覆盖全部 8 个步骤的完整执行日志，追加模式永不覆盖
+- **时间追踪**：每个步骤、每个任务的开始/结束/耗时，聚合统计故事和工作流总耗时
+- **Token 追踪**：执行中实时估算 + 后处理脚本精确 tiktoken 计数
+- **日志路径可配置**：启动时可选默认路径、项目根目录或自定义输出位置
 
 ## 目录结构
 
@@ -29,8 +33,9 @@ bmad-auto-dev-workflow/
 ├── validate-workflow.js  # 工作流文件静态校验器
 ├── references/
 │   ├── batch-resolution.md
+│   ├── calculate-tokens.js     # Token 后处理计算脚本
 │   ├── dry-run-mode.md
-│   ├── execution-log.md
+│   ├── execution-log.md        # 执行日志模板与使用说明
 │   ├── execution-mode.md
 │   ├── markdown-sprint-status-parser.md
 │   ├── report-mode.md
@@ -114,6 +119,44 @@ bmad-auto-dev-workflow --resume
 ```bash
 bmad-auto-dev-workflow --report-only --batch "v1.3.13-editor-update"
 ```
+
+## 过程记录文档
+
+工作流会生成一份完整的执行日志 (`execution-log-{execution_id}.md`)，记录每个步骤的详细信息：
+
+### 日志输出位置
+
+启动时选择日志保存位置：
+
+| 选项 | 路径 |
+|------|------|
+| **默认路径** | `{project}/_bmad-output/implementation-artifacts/{batch}/` |
+| **项目根目录** | `{project}/` |
+| **自定义路径** | 用户自行输入的目录 |
+
+### 记录内容
+
+- **全部 8 个步骤**：发现 → 创建故事 → 开发 → 测试 → 代码审查 → 状态更新 → 检查点 → 审计
+- **每步计时**：每个步骤的开始时间、结束时间、耗时
+- **任务明细**（开发步骤）：每个实现任务的开始/结束/耗时，完成状态
+- **聚合统计**：总/平均/最大/最小故事耗时，任务完成率
+- **Token 消耗**：执行中实时估算
+
+### APPEND-ONLY 策略
+
+同一 `execution_id` 下的日志文件**永不覆盖**，新条目始终追加在末尾。多次执行通过续传标记分隔，保留完整历史记录。
+
+## Token 计算
+
+执行中 Token 估算基于每步经验基数乘以重试系数。
+
+获取精确统计，在工作流完成后运行后处理脚本：
+
+```bash
+node references/calculate-tokens.js <日志文件路径>
+```
+
+需要安装 `tiktoken`（一次性安装：`npm install tiktoken`）。如未安装则自动回退为字符数估算。
 
 ## 校验
 

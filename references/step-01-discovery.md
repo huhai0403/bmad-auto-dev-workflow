@@ -343,6 +343,28 @@ because step-01's selection logic explicitly excludes:
 
 These branches exist only as a safety net for edge cases.
 
+## 流程记录 (Execution Log)
+
+### 记录故事发现步骤
+```yaml
+Action: APPEND to Execution Log (NEVER overwrite existing content)
+- Log Path: {execution_log_path}
+- Story: {current_story}
+- Step: Discovery
+- Step Start Time: {step_start_time}
+- Step End Time: {step_end_time}
+- Step Duration: {step_duration}
+- Status: success
+- Details:
+  - Selected Story: {current_story}
+  - Story Status Before: {previous_status}
+  - Selection Method: {filter_type} (story/epic/auto)
+  - Eligible Stories Found: {count}
+- APPEND to execution log
+```
+
+---
+
 ## State Persistence
 
 **Save execution context after**:

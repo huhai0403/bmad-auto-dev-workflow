@@ -250,17 +250,19 @@ Output: ✅ {current_story}: {outcome} → {new_status} (自动继续)
 
 ### 记录状态更新步骤
 ```yaml
-Action: Record Status Update in Execution Log
-- Log Path: {implementation_artifacts}/execution-log-{execution_id}.md
+Action: APPEND to Execution Log (NEVER overwrite existing content)
+- Log Path: {execution_log_path}
 - Story: {current_story}
 - Step: Status Update
-- Timestamp: {current_datetime}
+- Step Start Time: {step_start_time}
+- Step End Time: {step_end_time}
+- Step Duration: {step_duration}
 - Status: {success / failed}
 - Details:
   - Story Outcome: {outcome}
   - New Status: {new_status}
   - Duration: {duration}
-- Save to execution log
+- APPEND to execution log — DO NOT rewrite the file
 ```
 
 ## Next Step

@@ -100,6 +100,7 @@ Action: Document technical approach and decisions in Dev Agent Record → Implem
 
 #### RED Phase (Write Failing Tests First)
 ```yaml
+Action: Record task start time: {task_start_time}
 Action: Identify test requirements from acceptance criteria
 Action: Determine test framework from project structure:
   - Unit tests: Jest (npm run test:unit)
@@ -159,6 +160,17 @@ If implementation fails:
     Action: Record as blocking point
     Action: Mark story as blocked
     Action: Proceed to checkpoint or next story
+```
+
+#### Task Time Tracking:
+```yaml
+For EACH task executed, record timing:
+  Action: Before starting task → Record {task_start_time}
+  Action: After completing task → Record {task_end_time}
+  Action: Calculate {task_duration} = {task_end_time} - {task_start_time}
+  Action: APPEND to execution log task breakdown table:
+    | {task_index} | {task_description} | {task_start_time} | {task_end_time} | {task_duration} | {status} |
+  Action: Track cumulative task times for per-story duration calculation
 ```
 
 #### Blocking Point Recording:
@@ -256,6 +268,33 @@ Output: 🔧 Developing: {current_story} - Task {current_task_num}/{total_tasks}
 - Save execution context
 - Generate pause report
 - Wait for user input
+
+## 流程记录 (Execution Log)
+
+### 记录开发实现步骤
+```yaml
+Action: APPEND to Execution Log (NEVER overwrite existing content)
+- Log Path: {execution_log_path}
+- Story: {current_story}
+- Step: Development
+- Step Start Time: {step_start_time}
+- Step End Time: {step_end_time}
+- Step Duration: {step_duration}
+- Status: {success / failed}
+- Details:
+  - Tasks Completed: {completed_count}/{total_count}
+  - Per-Task Breakdown:
+    | Task | Start Time | End Time | Duration | Status |
+    | {task_1} | {t1_start} | {t1_end} | {t1_duration} | ✅/❌ |
+    | {task_2} | {t2_start} | {t2_end} | {t2_duration} | ✅/❌ |
+  - Review Continuation: {yes/no}
+  - Files Modified: {file_list}
+  - Retry Count: {retry_count}
+  - Estimated Tokens This Step: ~{tokens_estimate} (approximate)
+- APPEND to execution log
+```
+
+---
 
 ## State Persistence
 

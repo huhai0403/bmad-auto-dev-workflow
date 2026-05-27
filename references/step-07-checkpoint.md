@@ -296,16 +296,18 @@ If exiting:
 
 ### 记录检查点步骤
 ```yaml
-Action: Record Checkpoint in Execution Log
-- Log Path: {implementation_artifacts}/execution-log-{execution_id}.md
+Action: APPEND to Execution Log (NEVER overwrite existing content)
+- Log Path: {execution_log_path}
 - Story: {current_story}
 - Step: Checkpoint
-- Timestamp: {current_datetime}
+- Step Start Time: {step_start_time}
+- Step End Time: {step_end_time}
+- Step Duration: {step_duration}
 - Status: {success / failed}
 - Details:
   - Checkpoint Type: {after_story / after_review / on_blocking}
   - Outcome: {continued / paused / exited}
-- Save to execution log
+- APPEND to execution log — DO NOT rewrite the file
 ```
 
 ## State Persistence

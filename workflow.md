@@ -211,35 +211,123 @@ selected_batch: "{selected_batch}"
 
 ### 7. Execution Log File Setup (NEW)
 
-#### Initialize execution log document:
+#### APPEND-ONLY RULE (CRITICAL — NEVER OVERWRITE):
+- The execution log file MUST NEVER be overwritten or re-created
+- ALWAYS check if the file already exists before writing
+- If the file exists → APPEND to it, preserving ALL prior content
+- If the file doesn't exist → create it fresh (first run only)
+- This ensures COMPLETE execution history across multiple runs/resumes
+
+#### Execution Log Path Selection (ALWAYS performed, regardless of mode):
+```yaml
+Action: Ask user to select the output directory for the execution log document
+
+Prompt the user:
+  "请选择过程记录文档的生成位置："
+
+  Options:
+  1. 默认路径 (Recommended)
+     → {implementation_artifacts}/
+     完整路径: {implementation_artifacts}/execution-log-{execution_id}.md
+
+  2. 项目根目录
+     → {project-root}/
+     完整路径: {project-root}/execution-log-{execution_id}.md
+
+  3. 自定义路径
+     → 用户自行输入目录路径
+
+Action: Set {execution_log_path} based on user choice:
+  If choice == 1 (default):
+    {execution_log_path} = {implementation_artifacts}/execution-log-{execution_id}.md
+  If choice == 2 (project root):
+    {execution_log_path} = {project-root}/execution-log-{execution_id}.md
+  If choice == 3 (custom):
+    - Read user-input directory path → {custom_log_dir}
+    - Ensure directory exists (create if needed)
+    - {execution_log_path} = {custom_log_dir}/execution-log-{execution_id}.md
+
+Action: Output the resolved path to user:
+  "📋 过程记录文档输出位置: {execution_log_path}"
+
+Note: This prompt is shown even in headless mode (it's part of initialization,
+  not execution). In headless mode, if no user response is possible, default
+  to option 1 (default path).
+```
+
+#### Initialize execution log:
 ```yaml
 Action: Create or load execution log
-- Path: {implementation_artifacts}/execution-log-{execution_id}.md
-- Content (if new file):
-  # Execution Log: {execution_id}
-  ====================================
-  Start Time: {start_time}
-  End Time: (in progress)
-  Execution Mode: {execution_mode}
-  Selected Batch: {selected_batch}
+- Path: {execution_log_path}
 
-  ## Execution Summary
-  - Total Stories: TBD
-  - Completed: 0
-  - Blocked: 0
-  - Skipped: 0
-  - Success Rate: TBD%
+# FIRST: Check if file already exists
+If file already exists:
+  - DO NOT overwrite. DO NOT re-create. DO NOT regenerate headers.
+  - The existing file preserves ALL prior execution history
+  - Read existing file to verify it belongs to {selected_batch}
+  - Parse existing data: stories_completed, durations, token estimates
+  - If resuming (execution_mode includes resume):
+    - Add separator and resume marker at end:
+      ```
+      ---
+      ## Resumed Execution — {current_datetime}
+      **Resume Reason**: {from checkpoint / from blocking point}
+      **Context**: current_story={story}, current_step={step}
+      ---
+      ```
+  - Continue appending new log entries below existing content
 
-  ## Story Details
-  (to be filled in as stories are processed)
+If file does NOT exist (first run):
+  - Create new file with header:
+    # Execution Log: {execution_id}
+    ====================================
+    Start Time: {start_time}
+    End Time: (in progress)
+    Duration: (in progress)
+    Execution Mode: {execution_mode}
+    Selected Batch: {selected_batch}
+    Estimated Token Usage: (tracking in progress)
 
-  ## Blocking Points
-  (to be filled in as blocking points occur)
+    ## Execution Summary
 
-  ## Final Report
-  (to be filled in at completion)
+    ### 总体统计
+    - Total Stories: TBD
+    - Completed: 0
+    - Blocked: 0
+    - Skipped: 0
+    - Success Rate: TBD%
 
-- If resuming: Load existing log and continue appending
+    ### 时间统计
+    - 工作流总耗时: (in progress)
+    - 故事平均耗时: (in progress)
+    - 最长故事耗时: (in progress)
+    - 最短故事耗时: (in progress)
+
+    ### Token 消耗估算
+    - 估算总 Token: (in progress)
+    - 平均每故事 Token: (in progress)
+
+    ### 任务统计
+    - 总开发任务数: (in progress)
+    - 已完成任务数: (in progress)
+    - 任务完成率: (in progress)
+
+    ### 状态分布
+    (to be filled)
+
+    ## 故事执行详情
+    (to be filled in as stories are processed)
+
+    ## 阻塞点汇总
+    (to be filled in as blocking points occur)
+
+    ## 最终报告
+    (to be filled in at completion)
+
+  - Initialize time tracking counters in memory:
+    - workflow_start_time = {current_timestamp}
+    - story_start_times = {} (per-story tracking)
+    - total_estimated_tokens = 0
 ```
 
 ---
@@ -499,7 +587,7 @@ Yes  No   Intervention
 - Before exiting workflow
 
 ### Execution Log Location:
-- Execution log is maintained at `{implementation_artifacts}/execution-log-{execution_id}.md`
+- Execution log is maintained at `{execution_log_path}`
 - Logging rules defined in `references/execution-log.md`
 
 ### Execution Context Fields to Update:

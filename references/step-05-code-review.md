@@ -464,11 +464,13 @@ Output: ✅ Review Approved: {current_story} → done (自动继续)
 
 ### 记录代码审查步骤
 ```yaml
-Action: Record Code Review in Execution Log
-- Log Path: {implementation_artifacts}/execution-log-{execution_id}.md
+Action: APPEND to Execution Log (NEVER overwrite existing content)
+- Log Path: {execution_log_path}
 - Story: {current_story}
 - Step: Code Review
-- Timestamp: {current_datetime}
+- Step Start Time: {step_start_time}
+- Step End Time: {step_end_time}
+- Step Duration: {step_duration}
 - Status: {success / failed}
 - Details:
   - Review Mode: Dual Perspectives
@@ -476,7 +478,7 @@ Action: Record Code Review in Execution Log
   - Review 2: {outcome} - {high}H, {med}M, {low}L
   - Perspectives Agreed: {yes/no}
   - Final Outcome: {outcome}
-- Save to execution log
+- APPEND to execution log — DO NOT rewrite the file
 ```
 
 ## Next Step

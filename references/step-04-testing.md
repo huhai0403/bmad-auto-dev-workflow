@@ -521,18 +521,20 @@ If ANY FAILED:
 
 ### 记录测试步骤 - MUST INCLUDE FULL DETAILS
 ```yaml
-Action: Record Testing in Execution Log
-- Log Path: {implementation_artifacts}/execution-log-{execution_id}.md
+Action: APPEND to Execution Log (NEVER overwrite existing content)
+- Log Path: {execution_log_path}
 - Story: {current_story}
 - Step: Testing
-- Timestamp: {current_datetime}
+- Step Start Time: {step_start_time}
+- Step End Time: {step_end_time}
+- Step Duration: {step_duration}
 - Status: {success / failed}
 - Details:
   - Unit Tests: {passed}/{total} passed (Exit: {exit_code})
   - E2E Tests: {passed}/{total} passed (if applicable)
   - Linting: {errors} errors, {warnings} warnings
   - DoD: {X}/11 items complete
-- Save to execution log
+- APPEND to execution log — DO NOT rewrite the file
 ```
 
 ---

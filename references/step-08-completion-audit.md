@@ -234,7 +234,7 @@ Action: Save execution context one final time
 ### Record audit results in execution log:
 
 ```yaml
-Action: Add to {implementation_artifacts}/execution-log-{execution_id}.md:
+Action: Add to {execution_log_path}:
 
 ## Completion Audit ({timestamp})
 - Stories checked: {count}

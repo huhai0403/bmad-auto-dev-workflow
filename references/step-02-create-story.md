@@ -294,6 +294,29 @@ Action: IMMEDIATELY load references/step-03-development.md. NO pause.
 - **Headless**: IMMEDIATELY load `references/step-03-development.md` directly
 - **Semi-automated**: Present summary, then load `references/step-03-development.md`
 
+## 流程记录 (Execution Log)
+
+### 记录故事创建步骤
+```yaml
+Action: APPEND to Execution Log (NEVER overwrite existing content)
+- Log Path: {execution_log_path}
+- Story: {current_story}
+- Step: Create Story
+- Step Start Time: {step_start_time}
+- Step End Time: {step_end_time}
+- Step Duration: {step_duration}
+- Status: {success / failed}
+- Details:
+  - Story File Created: {default_output_file}
+  - Previous Status: backlog
+  - New Status: ready-for-dev
+  - Artifacts Loaded: prd, epics, architecture
+  - Previous Story Intelligence: {yes/no}
+- APPEND to execution log
+```
+
+---
+
 ## State Persistence
 
 **Save execution context after**:

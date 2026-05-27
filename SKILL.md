@@ -17,7 +17,12 @@ This skill orchestrates a fully automated development pipeline from story creati
 - **Failure handling**: Automatic retry (up to 2 attempts) with detailed blocking point tracking
 - **Comprehensive logging**: Detailed execution reports and blocking point records
 - **Execution log (NEW)**: Generates detailed execution log documenting every step performed
+  - **APPEND-ONLY**: Within the same `execution_id`, the log file is never overwritten — new entries are always appended. A new file is only created when starting a fresh execution.
 - **Completion audit (NEW)**: Auto-verifies all completed stories have required artifacts (test output, lint output, code review)
+- **Token tracking (NEW)**:
+  - **Real-time**: Approximate token consumption estimated per step and per task during execution
+  - **Post-process**: Run `node references/calculate-tokens.js <log-path>` after workflow completes for exact tiktoken-based counts
+  - **Time tracking**: Per-step and per-task start/end/duration recorded in execution log
 
 **Your role**: Act as a workflow orchestrator that coordinates multiple BMad skills, manages state, handles failures, and provides comprehensive visibility into the execution pipeline.
 
@@ -199,9 +204,10 @@ This skill supports multiple requirement batches in your project structure:
      - `{implementation_artifacts}` = resolved path from batch selection
      - `{sprint_status_path}` = resolved file from batch selection
      - `{sprint_status_format}` = "yaml" or "markdown" (detected during resolution)
-     - `{execution_context_path} = {implementation_artifacts}/auto-dev-execution-context.yaml`
-     - `{blocking_points_path} = {implementation_artifacts}/blocking-points.yaml`
-     - `{selected_batch}` = the batch name user selected
+  - `{execution_context_path} = {implementation_artifacts}/auto-dev-execution-context.yaml`
+      - `{blocking_points_path} = {implementation_artifacts}/blocking-points.yaml`
+      - `{execution_log_path}` = user-selected path (see Execution Log Path Selection in workflow.md §7)
+      - `{selected_batch}` = the batch name user selected
 
 5. **Initialize or load execution context**:
    - If `{resume_mode} = true`:

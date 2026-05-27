@@ -19,6 +19,10 @@ Story Creation → Development → Testing → Multi-Model Code Review → Statu
 - **Dry-run mode**: validates routing logic without executing real dev/test/review
 - **Resume support**: pick up from where you left off
 - **Multi-batch support**: handles multiple requirement batches with fuzzy matching for naming variations
+- **Execution log**: comprehensive process recording across all 8 steps — append-only, never overwrites
+- **Time tracking**: per-step and per-task start/end/duration, aggregated story/workflow totals
+- **Token tracking**: real-time estimation during execution + post-process script for exact tiktoken counts
+- **Configurable log path**: choose default, project root, or custom output directory on startup
 
 ## Directory structure
 
@@ -29,8 +33,9 @@ bmad-auto-dev-workflow/
 ├── validate-workflow.js  # Static validator for workflow files
 ├── references/
 │   ├── batch-resolution.md
+│   ├── calculate-tokens.js     # Post-process token calculation script
 │   ├── dry-run-mode.md
-│   ├── execution-log.md
+│   ├── execution-log.md        # Execution log template and usage guide
 │   ├── execution-mode.md
 │   ├── markdown-sprint-status-parser.md
 │   ├── report-mode.md
@@ -44,7 +49,8 @@ bmad-auto-dev-workflow/
 │   ├── step-07-checkpoint.md
 │   └── step-08-completion-audit.md
 ├── LICENSE
-└── README.md
+├── README.md
+└── README_CN.md
 ```
 
 ## Dependencies
@@ -113,6 +119,44 @@ bmad-auto-dev-workflow --resume
 ```bash
 bmad-auto-dev-workflow --report-only --batch "v1.3.13-editor-update"
 ```
+
+## Execution Log
+
+The workflow generates a comprehensive execution log (`execution-log-{execution_id}.md`) documenting every step:
+
+### Log output location
+
+On startup, you choose where the log is saved:
+
+| Option | Path |
+|--------|------|
+| **Default** | `{project}/_bmad-output/implementation-artifacts/{batch}/` |
+| **Project root** | `{project}/` |
+| **Custom** | Any directory you specify |
+
+### What's recorded
+
+- **All 8 steps**: Discovery → Create Story → Development → Testing → Code Review → Status Update → Checkpoint → Audit
+- **Per-step timing**: start time, end time, duration for each step
+- **Per-task breakdown** (Development): start/end/duration for each implementation task, completion status
+- **Aggregated statistics**: total/avg/max/min story duration, task completion rate
+- **Token consumption**: real-time estimation during execution
+
+### APPEND-ONLY policy
+
+Within the same `execution_id`, the log is **never overwritten**. New entries are always appended. Resume markers separate multiple execution sessions in the same file.
+
+## Token Calculation
+
+Real-time token estimates use per-step base values multiplied by retry coefficients.
+
+For exact counts, run the post-process script after the workflow completes:
+
+```bash
+node references/calculate-tokens.js <path-to-execution-log>
+```
+
+Requires `tiktoken` (install once with `npm install tiktoken`). Falls back to character-based estimation if tiktoken is unavailable.
 
 ## Validation
 
